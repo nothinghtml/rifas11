@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rifa de $6000</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lato:wght@300;400&display=swap');
+        
+        body {
+            font-family: 'Lato', sans-serif;
+            background-color: #e0f7df;
+            text-align: center;
+            color: #333;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            margin: 30px auto;
+            width: 90%;
+            max-width: 1200px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #ff5722;
+            font-family: 'Bebas Neue', cursive;
+            font-size: 50px;
+            margin-bottom: 40px;
+        }
+        .info {
+            background-color: #f8f8f8;
+            border: 2px solid #4caf50;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            font-family: 'Lato', sans-serif;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 15px;
+            justify-items: center;
+            margin: 40px 0;
+        }
+        .number {
+            padding: 15px;
+            background-color: #4caf50;
+            border: 2px solid #388e3c;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            color: white;
+            transition: background-color 0.3s, transform 0.2s;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .number:hover {
+            background-color: #388e3c;
+            transform: scale(1.1);
+        }
+        .number.selected {
+            background-color: #1b5e20;
+        }
+        .number.confirmed {
+            background-color: white;
+            color: #888;
+            pointer-events: none;
+            border: 2px solid #bbb;
+        }
+        form {
+            display: none;
+            margin-top: 40px;
+        }
+        input[type="text"], input[type="tel"] {
+            padding: 10px;
+            margin: 10px;
+            width: 80%;
+            border: 1px solid #388e3c;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #388e3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #2e7d32;
+        }
+        #total {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>¡Gran Rifa de $6000!</h1>
+        <div class="info">
+            <p>Compra tu boleto por solo $15. La rifa se hará una vez que se vendan todos los números.</p>
+            <p>¡No te quedes fuera! Aprovecha esta oportunidad segura y aumenta tus posibilidades de ganar.</p>
+        </div>
+
+        <div class="grid" id="numberGrid"></div>
+
+        <form id="infoForm">
+            <h2>Rellena tus datos</h2>
+            <input type="text" id="nombre" placeholder="Nombre" required>
+            <input type="tel" id="telefono" placeholder="Número de teléfono" required>
+            <button type="submit">Apartar números</button>
+        </form>
+
+        <div id="total"></div>
+    </div>
+
+    <script>
+        const grid = document.getElementById('numberGrid');
+        const form = document.getElementById('infoForm');
+        const totalElement = document.getElementById('total');
+        let selectedNumbers = [];
+        let confirmedNumbers = JSON.parse(localStorage.getItem('confirmedNumbers')) || [];
+        const precioBoleto = 15; // Precio del boleto
+
+        // Crear los botones de los números
+        for (let i = 1; i <= 500; i++) {
+            const numberDiv = document.createElement('div');
+            numberDiv.classList.add('number');
+            numberDiv.innerText = i;
+            if (confirmedNumbers.includes(i)) {
+                numberDiv.classList.add('confirmed'); // Marcar como confirmado si ya fue seleccionado
+            }
+            numberDiv.onclick = () => toggleNumberSelection(i, numberDiv);
+            grid.appendChild(numberDiv);
+        }
+
+        function toggleNumberSelection(number, element) {
+            if (confirmedNumbers.includes(number)) {
+                alert("El número " + number + " ya ha sido confirmado.");
+                return;
+            }
+
+            if (selectedNumbers.includes(number)) {
+                selectedNumbers = selectedNumbers.filter(n => n !== number);
+                element.classList.remove('selected');
+            } else {
+                selectedNumbers.push(number);
+                element.classList.add('selected');
+            }
+
+            form.style.display = selectedNumbers.length > 0 ? 'block' : 'none';
+            mostrarTotal();
+        }
+
+        function mostrarTotal() {
+            const total = selectedNumbers.length * precioBoleto;
+            totalElement.innerText = `Monto total a pagar: $${total}`;
+        }
+
+        form.onsubmit = (e) => {
+            e.preventDefault();
+            const nombre = document.getElementById('nombre').value;
+            const telefono = document.getElementById('telefono').value;
+
+            if (nombre && telefono && selectedNumbers.length > 0) {
+                const total = selectedNumbers.length * precioBoleto; // Calcular el total nuevamente
+                const confirmacion = confirm(`¿Estás seguro de que deseas apartar los números ${selectedNumbers.join(", ")} por un total de $${total}?`);
+                if (confirmacion) {
+                    confirmedNumbers = confirmedNumbers.concat(selectedNumbers);
+                    localStorage.setItem('confirmedNumbers', JSON.stringify(confirmedNumbers)); // Guardar en Local Storage
+                    selectedNumbers.forEach(number => {
+                        const selectedElement = document.querySelector(`.number.selected`);
+                        selectedElement.classList.remove('selected');
+                        selectedElement.classList.add('confirmed');
+                    });
+
+                    const mensaje = `Hola, he seleccionado los números ${selectedNumbers.join(", ")} para la rifa. Mis datos son: ${nombre}, Tel: ${telefono}. Total a pagar: $${total}`;
+                    const url = `https://wa.me/9371190828?text=${encodeURIComponent(mensaje)}`;
+                    window.location.href = url;
+
+                    selectedNumbers = []; // Reiniciar la selección después de confirmar
+                    form.style.display = 'none';
+                    mostrarTotal(); // Actualizar el total
+                }
+            }
+        }
+    </script>
+</body>
+</html>
